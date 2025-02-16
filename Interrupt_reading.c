@@ -76,6 +76,36 @@ void setOscTo16MHZ()
 
 } // eo setOscTo16Mhz::
 
+/*>>> configIOPorts: ===========================================================
+Author:      Nihal Brarath
+Date:        24/05/2024
+Modified:    None
+Desc:        Configs the port to Digital Input, which is the safest config for pin
+Input:       None 
+Returns:     None 
+ ============================================================================*/
+void configIOPorts(void)
+{
+    ANSELA = 0x07;//set a0,a1,a2 as analog;a4,a5,a6,a7 as digital
+    LATA = SAFELOW; //LATCH A PORT TO GND
+    TRISA = 0xFF;    //set port A all to inputs
+
+    ANSELB = SAFELOW;//set port B as digitalp
+    LATB = SAFELOW;    //set port B all to GND
+    TRISB = 0xF0; //set lower nibble to O/P
+
+    ANSELC = SAFELOW;//set LOWER NIBBLE TO
+    LATC = SAFELOW;    //set port C all to GND
+    TRISC = 0xF0; //set lower nibble to O/P
+
+    ANSELD = SAFELOW;//set port D as digitalp
+    LATD = SAFELOW;    //set port D all to GND
+    TRISD = 0xFF; //set port D all to input
+    
+    
+} // eo configIOPorts::
+
+
 /*>>> configAsyncUART: ===========================================================
 Author:      Nihal Brarath
 Date:        24/05/2024
@@ -149,7 +179,7 @@ void isr(void)
 	       }
 	       else
 	       {
-	           
+	           	LATC=0x0F;
 				ptr++;
 	       }
 	   }    
@@ -192,6 +222,7 @@ void sysConfig(void)
     intConfig();
 	configAsyncUART();
     setOscTo16MHZ();
+	configIOPorts();
 } // eo sysConfig::      
 
 
