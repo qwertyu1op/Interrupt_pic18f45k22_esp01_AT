@@ -1,0 +1,4 @@
+Warning[2066] C:\Users\brara\OneDrive\Documents\GitHub\Interrupt_pic18f45k22_esp01_AT\Interrupt_reading.c 147 : type qualifier mismatch in assignment
+Warning[2058] C:\Users\brara\OneDrive\Documents\GitHub\Interrupt_pic18f45k22_esp01_AT\Interrupt_reading.c 193 : call of function without prototype
+Warning[2058] C:\Users\brara\OneDrive\Documents\GitHub\Interrupt_pic18f45k22_esp01_AT\Interrupt_reading.c 194 : call of function without prototype
+Warning[2066] C:\Users\brara\OneDrive\Documents\GitHub\Interrupt_pic18f45k22_esp01_AT\Interrupt_reading.c 203 : type qualifier mismatch in assignment
