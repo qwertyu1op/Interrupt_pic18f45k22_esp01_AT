@@ -27,6 +27,7 @@
 #include <p18f45k22.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <delays.h>
 
 // Constants  =================================================================
 #define TRUE	1	
@@ -35,9 +36,14 @@
 #define ESP_OKAY 1
 #define ESP_CONNECT 2
 
-#define RC2READ RCREG1
-#define RC2FLAG PIR1bits.RC1IF
+#define SAFELOW 0x00;
+#define SAFEHIGH 0xFF;
+
+#define RC1READ RCREG1
+#define RC1FLAG PIR1bits.RC1IF
 #define BUFSIZE 100	
+
+#define OSCMASK	0x52
 
 // Global Variables  ==========================================================
 //RESPONSES POSSIBLE
@@ -52,14 +58,31 @@ void isr(void);
 
 // Functions  =================================================================
 
-#pragma code interruptVector=0x0008
-void interruptVector()
+#pragma code interrupt_vector=0x0008
+void interrupt_vector()
 {
     _asm //reduce to assembly language
         GOTO isr //go find ISR function and execute it
     _endasm //return to C code
 }
 #pragma code
+
+
+/*>>> setOsc4Mhz: ===========================================================
+Author:      BITO BABU
+Date:        17/05/2024
+Modified:    None
+Desc:        The function sets the oscillator frequency to 4MHZ.
+Input:       None 
+Returns:     None 
+ ============================================================================*/
+void setOsc4Mhz()
+{
+    OSCCON=OSCMASK;
+    while(!OSCCONbits.HFIOFS); 
+} // eo setosc4MHZ()::
+
+
 
 /*>>> setOscTo16Mhz: ===========================================================
 Author:      Nihal Brarath
@@ -75,6 +98,9 @@ void setOscTo16MHZ()
 	while(!OSCCONbits.HFIOFS);
 
 } // eo setOscTo16Mhz::
+
+
+
 
 /*>>> configIOPorts: ===========================================================
 Author:      Nihal Brarath
@@ -126,7 +152,7 @@ void configAsyncUART()
 	BAUDCON1bits.BRG16= TRUE;
 	
 	//STEP2 MAKE TRIS 1
-	TRISCbits.RC6=TRUE;
+	TRISCbits.RC6=FALSE;
 	TRISCbits.RC7=TRUE;
 
 	//STEP3 ENABLE ASYNC AND ENABLES PORT PINS
@@ -141,6 +167,7 @@ void configAsyncUART()
 	
 	//NOW WHEN WE SEND A BYTE TO TXREG1 THIS WILL TRANSMIT set ansel maybe?
 } // eo configAsyncUART::
+
 
 /*>>> intConfig: ===========================================================
 Author:      Nihal Brarath
@@ -158,6 +185,23 @@ void intConfig(void)
     
 } // eo intConfig::
 
+/*>>> splConfig: ===========================================================
+Author:      BITO BABU
+Date:        17/05/2024
+Modified:    Nihal Brarath
+Desc:        Baud 9600 The function configure the USART1 module.
+Input:       None 
+Returns:     None 
+ ============================================================================
+void sp1Config()
+{
+	SPBRG1=25;
+	BAUDCON1=0x40;
+	RCSTA1=0x90;
+	TXSTA1=0x26;
+}//eo sp1Config()::
+*/
+
 /*>>> isr: ===========================================================
 Author:      Nihal Brarath
 Date:        14/06/2024
@@ -166,24 +210,26 @@ Desc:        Function for timer0 interrupt trigger event and receivers interupt 
 Input:       None 
 Returns:     None 
  ============================================================================*/
-void isr(void)
+void isr()
 {
-   	while(RC2FLAG)
-	   {
-	       *ptr=RC2READ;
-	       if(*ptr=='\r')
-	       {
-	           *(ptr+1)=0;
-	           printf("\n\r%s",buf);
-	           ptr=buf;
-	       }
-	       else
-	       {
-	           	LATC=0x0F;
-				ptr++;
-	       }
-	   }    
-    
+   	while(TRUE)
+	{
+		if(RC1FLAG)
+		   {
+		       *ptr=RC1READ;
+		       if(*ptr=='\r')
+		       {
+		           *(ptr+1)=0;
+		           printf("\n\r%s",buf);
+		           ptr=buf;
+		       }
+		       else
+		       {
+		           	LATC=0x0F;
+					ptr++;
+		       }
+		   }    
+	}    
   INTCON|=0xC0;  
     
 }
@@ -200,8 +246,8 @@ void sendUART(char* data)
 {
 	while(*data)
 	{
-		//while(!PIR1bits.TX1IF); may not be as accurate as we think
-		while(!TXSTAbits.TRMT);
+		//while(!TXSTAbits.TRMT); may not be as accurate as we think
+		while(!PIR1bits.TX1IF);
 		TXREG1=*data++;
 		
 	}
@@ -230,8 +276,13 @@ void sysConfig(void)
  ============================================================================*/
 void main( void )
 {
+	char check=RCSTA1bits.OERR;
 	sysConfig();
-	sendUART("AT+GMR");
+	
+	//sendUART("\r\nAT+UART_CUR=9600,8,1,0,3\r\n");
+	sendUART("\r\nAT+GMR\r\n");
+	while(TRUE);
+	
 	//because of the isr i should get something in the buf
 	
 } // eo main::
